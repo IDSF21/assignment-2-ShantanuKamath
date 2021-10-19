@@ -1,4 +1,4 @@
-resultId,raceId,driverId,constructorId,start_position,positionOrder,points,laps,fastestLapTime,fastestLapSpeed,driverRef,dob,driver_nationality,driver_name,race_year,round,circuitId,circuit_name,date,constructorRef,team_name,team_nationality,lat,lon
+resultId,raceId,driverId,constructorId,start_position,finish_position,points,laps,fastestLapTime,fastestLapSpeed,driverRef,dob,driver_nationality,driver_name,race_year,round,circuitId,circuit_name,date,constructorRef,team_name,team_nationality,lat,lon
 1,18,1,1,1,1,10.0,58,1:27.452,218.300,hamilton,1985-01-07,British,Lewis Hamilton,2008,1,1,Australian Grand Prix,2008-03-16,mclaren,McLaren,British,-37.8497,144.968
 2,18,2,2,5,2,8.0,58,1:27.739,217.586,heidfeld,1977-05-10,German,Nick Heidfeld,2008,1,1,Australian Grand Prix,2008-03-16,bmw_sauber,BMW Sauber,German,-37.8497,144.968
 3,18,3,3,7,3,6.0,58,1:28.090,216.719,rosberg,1985-06-27,German,Nico Rosberg,2008,1,1,Australian Grand Prix,2008-03-16,williams,Williams,British,-37.8497,144.968
