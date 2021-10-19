@@ -9,13 +9,16 @@ from PIL import Image
 from io import BytesIO
 st.set_page_config(layout="wide")
 
-st.title('Formula1')
-st.title('Who is the GOAT - Greatest Of All Time')
+st.text('No way to settle an argument...')
+st.text('Tired of always arguing with your friends...')
+st.text("Not being able to convince them that you're right...")
+st.text("Well this should help you!")
+st.title('Who is the Formula 1 GOAT (Greatest Of All Time) ?')
+st.text('And now I can argue (or not) with facts. Yes facts. Not just anecdotes and glamour, but cold hard FACTS.')
 
 @st.cache
 def load_data():
-    df = pd.read_csv("./race_results_mega.csv")
-    return df
+    return pd.read_csv("./race_results_mega.csv")
 
 @st.cache
 def get_driver_image(driver_name):
@@ -37,41 +40,53 @@ def get_driver_image(driver_name):
     else:
         return "https://media.gettyimages.com/photos/racing-driver-standing-proud-on-black-background-picture-id91030097?k=20&m=91030097&s=612x612&w=0&h=tQI8woI99U7eEVCSwkrqJUUbcHpUIM41pLvZ856uXiY="
 
-def map(data):
-    st.write(pdk.Deck(
-        map_style="mapbox://styles/mapbox/light-v9",
-        layers=[
-            pdk.Layer(
-                "HexagonLayer",
-                data=data,
-                auto_highlight=True,
-                get_position=["lon", "lat"],
-                radius=100,
-                elevation_scale=4,
-                elevation_range=[0, 1000],
-                pickable=True,
-                extruded=True,
-            ),
-        ]
-    ))
+def map(data, lat, lon, zoom, column):
+    column.pydeck_chart(pdk.Deck(
+     map_style='mapbox://styles/mapbox/light-v9',
+     initial_view_state=pdk.ViewState(
+         latitude=lat,
+         longitude=lon,
+         zoom=zoom,
+         pitch=50,
+     ),
+     layers=[
+         pdk.Layer(
+            'HexagonLayer',
+            data=data,
+            get_position='[lon, lat]',
+            radius=100,
+            elevation_scale=1,
+            elevation_range=[0, 100],
+            pickable=True,
+            extruded=True,
+         )
+     ],
+ ))
 
-data_load_state = st.text('Ready Set Lights')
+
+# Load Data
+# data_load_state = st.subheader('Calling Hamilton, Schumacher and Alonso, asking for their stats...')
 data = load_data()
-data_load_state.text('Ready Set Lights...done!')
+# data_load_state.subheader('Calling Hamilton, Schumacher and Alonso, asking for their stats...and done!')
 
-subheading = st.subheader('Formula 1 - Race data from {}-{}'.format(1950, 2021))
+
+# Query Date Range
+subheading = st.subheader('Race data from {}-{}'.format(1950, 2021))
 year_values = st.slider('Select data range', 1950, 2021, (1950, 2021))
-subheading.subheader('Formula 1 - Race data from {}-{}'.format(year_values[0], year_values[1]))
+subheading.subheader('Race data from {}-{}'.format(year_values[0], year_values[1]))
 
-selected_options = st.multiselect("Select the drivers for comparison:", data.driver_name.unique(), ['Lewis Hamilton', 'Michael Schumacher', 'Nico Rosberg', 'Max Verstappen', 'Fernando Alonso'])
-
-data = data[data.driver_name.isin(selected_options)]
+# Query Drivers
+st.subheader('Select drivers')
+selected_drivers = st.multiselect("Select the drivers for comparison:", data.driver_name.unique(), ['Lewis Hamilton', 'Michael Schumacher', 'Kimi Raikkonen', 'Fernando Alonso'])
+data = data[data.driver_name.isin(selected_drivers)]
 data = data[data.race_year.between(year_values[0], year_values[1], inclusive=True)]
+
+# Display Dataset
 st.write(data)
 
-resizedImages = []
-cols = st.columns(len(selected_options))
-for idx, name in enumerate(selected_options):
+# Display driver image
+cols = st.columns(len(selected_drivers))
+for idx, name in enumerate(selected_drivers):
     url = get_driver_image(name)
     try:
         r = requests.get(url)
@@ -80,12 +95,12 @@ for idx, name in enumerate(selected_options):
         r = requests.get("https://media.gettyimages.com/photos/racing-driver-standing-proud-on-black-background-picture-id91030097?k=20&m=91030097&s=612x612&w=0&h=tQI8woI99U7eEVCSwkrqJUUbcHpUIM41pLvZ856uXiY=")
         img = Image.open(BytesIO(r.content))
     resizedImg = img.resize((225, 325), Image.ANTIALIAS)
-    resizedImages.append(resizedImg)
-    cols[idx].header(selected_options[idx])
+    cols[idx].header(selected_drivers[idx])
     cols[idx].image(resizedImg)
 
-cols = st.columns(len(selected_options))
-for idx, name in enumerate(selected_options):
+# Statistics
+cols = st.columns(len(selected_drivers))
+for idx, name in enumerate(selected_drivers):
     wins = len(data[(data.driver_name == name) & (data.finish_position == 1)].index)
     podiums = len(data[(data.driver_name == name) & (data.finish_position.isin([1,2,3]))].index)
     poles = len(data[(data.driver_name == name) & (data.start_position.isin([1]))].index)
@@ -102,11 +117,27 @@ for idx, name in enumerate(selected_options):
     cols[idx].metric(label="Race Win Rate", value="{:.2f} %".format(win_rate))
     cols[idx].metric(label="Podium Finish Rate", value="{:.2f} %".format(podium_rate))
     cols[idx].metric(label="Qualifying Pole Rate", value="{:.2f} %".format(pole_rate))
-# map(data)
-# if all_options:
-#     selected_options = ['A', 'B', 'C']
-# if un
-# Win Percentage
-# Map of wins per location
-# Pole positions
-# Most positions gained
+
+# Select circuits
+st.subheader("Select your favourite circuit")
+selected_circuit = st.selectbox("Select a race circuits for comparison:", data.circuit_name.unique(), index=7)
+cols = st.columns(len(selected_drivers))
+
+# Display circuits
+cols = st.columns(len(selected_drivers))
+for idx, name in enumerate(selected_drivers):
+    driver_data = data[(data.driver_name == name)]
+    lat = data[data.circuit_name == selected_circuit].lat.iloc[0]
+    lon = data[data.circuit_name == selected_circuit].lon.iloc[0]
+    cols[idx].header(selected_circuit)
+    map(driver_data,lat, lon, 15    , cols[idx])
+    race_data = driver_data[driver_data.circuit_name == selected_circuit].set_index('race_year')
+    race_data.index = race_data.index.map(str)
+    race_data['position_gained'] = race_data['finish_position'] - race_data['start_position']
+    cols[idx].subheader('Positions')
+    cols[idx].line_chart(race_data[['start_position', 'finish_position', 'position_gained']])
+    total_points = race_data['points'].sum()
+    avg_points = race_data['points'].mean()
+    delta = race_data[race_data.index == race_data.index[-1]]['points'].mean()
+    cols[idx].metric(label="Total Points earned on this circuit", value="{}".format(total_points), delta=delta)
+    cols[idx].metric(label="Average points earned per race", value="{:.1f}".format(avg_points))
