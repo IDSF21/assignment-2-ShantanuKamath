@@ -25,12 +25,11 @@ def load_data():
 def get_driver_image(driver_name):
     driver_name = driver_name.replace(' ', '%20')
     conn = http.client.HTTPSConnection("api-formula-1.p.rapidapi.com")
-        # 'x-rapidapi-key': "7e627ff4bemsh076cf2f715b08f9p1ede64jsnb7e5375d9a8f"
 
     headers = {
         'x-rapidapi-host': "api-formula-1.p.rapidapi.com",
-        'x-rapidapi-key': st.secrets["rapidapi_key"]
-        # 'x-rapidapi-key': "7e627ff4bemsh076cf2f715b08f9p1ede64jsnb7e5375d9a8f"
+        # 'x-rapidapi-key': st.secrets["rapidapi_key"]
+        'x-rapidapi-key': "7e627ff4bemsh076cf2f715b08f9p1ede64jsnb7e5375d9a8f"
         }
 
     conn.request("GET", "/drivers?search={}".format(driver_name), headers=headers)
