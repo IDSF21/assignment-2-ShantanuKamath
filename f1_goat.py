@@ -11,7 +11,7 @@ import seaborn as sns
 import altair as alt
 import matplotlib.pyplot as plt
 
-disable_api = True
+disable_api = False
 st.set_page_config(layout="wide")
 
 st.text('No way to settle an argument...')
@@ -21,7 +21,6 @@ st.text("Well this should help you!")
 st.title('Who is the Formula 1 GOAT (Greatest Of All Time) ?')
 st.text('And now I can argue (or not) with facts. Yes facts. Not just anecdotes and glamour, but cold hard FACTS.')
 
-flag=False
 @st.cache
 def load_data():
     return pd.read_csv("./race_results_mega.csv")
@@ -74,7 +73,6 @@ def map(data, lat, lon, zoom, column):
  ))
 
 def winner():
-    flag=True
     st.balloons()
     col3.title("Lewis Hamilton")
     col3.image(resizedImgs[0])
