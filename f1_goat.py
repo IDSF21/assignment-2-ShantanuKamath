@@ -88,6 +88,7 @@ def calculate_scores(scores):
 data = load_data()
 # data_load_state.subheader('Calling Hamilton, Schumacher and Alonso, asking for their stats...and done!')
 
+st.header('Change the various inputs and find your GOAT among the contenders!')
 # Query Drivers
 st.subheader('Select drivers')
 # ['Lewis Hamilton', 'Michael Schumacher', 'Kimi Raikkonen', 'Fernando Alonso']
@@ -232,8 +233,8 @@ driver = data[(data.driver_name == selected_drivers[idx]) & (data.team_name == t
 activ_years = driver["race_year"].unique()
 data = data[(data.team_name == team_name) & data.race_year.isin(activ_years)]
 team_drivers = data.groupby(['race_year', "driver_name"]).agg({"points":"sum"}).reset_index()
-
-st.subheader("Different driver's at {} and their championship points".format(team_name))
+st.markdown("<h2 style='text-align: center;'>"+"{} was last driving for {}".format(selected_drivers[idx], team_name)+"</h2>", unsafe_allow_html=True)
+st.subheader("{} compared to other drivers at {} in terms of championship points".format(selected_drivers[idx], team_name))
 
 gp_chart = alt.Chart(team_drivers).mark_bar().encode(
   alt.Column('race_year'), alt.X('driver_name'),
