@@ -7,6 +7,9 @@ import json
 import requests
 from PIL import Image
 from io import BytesIO
+import seaborn as sns
+import altair as alt
+import matplotlib.pyplot as plt
 st.set_page_config(layout="wide")
 
 st.text('No way to settle an argument...')
@@ -81,18 +84,11 @@ def calculate_scores(scores):
 data = load_data()
 # data_load_state.subheader('Calling Hamilton, Schumacher and Alonso, asking for their stats...and done!')
 
-
-# Query Date Range
-subheading = st.subheader('Race data from {}-{}'.format(1950, 2021))
-year_values = st.slider('Select data range', 1950, 2021, (1950, 2021))
-subheading.subheader('Race data from {}-{}'.format(year_values[0], year_values[1]))
-
 # Query Drivers
 st.subheader('Select drivers')
 # ['Lewis Hamilton', 'Michael Schumacher', 'Kimi Raikkonen', 'Fernando Alonso']
 selected_drivers = st.multiselect("Select the drivers for comparison:", data.driver_name.unique(), ['Nico Rosberg','Kimi Raikkonen', 'Fernando Alonso'])
 data = data[data.driver_name.isin(selected_drivers)]
-data = data[data.race_year.between(year_values[0], year_values[1], inclusive=True)]
 
 # Display Dataset
 st.write(data)
@@ -123,7 +119,8 @@ for idx, name in enumerate(selected_drivers):
     podiums = len(data[(data.driver_name == name) & (data.finish_position.isin([1,2,3]))].index)
     poles = len(data[(data.driver_name == name) & (data.start_position.isin([1]))].index)
     total = len(data[(data.driver_name == name)].index)
-
+    driver = data[(data.driver_name == name)]
+    team =  driver[(driver.race_year == driver.race_year.max())].iloc[0]['team_name']
     if total == 0:
         win_rate = 0
         podium_rate = 0
@@ -132,6 +129,7 @@ for idx, name in enumerate(selected_drivers):
         win_rate = wins*100/total
         podium_rate = podiums*100/total
         pole_rate = poles*100/total
+    cols[idx].metric(label="Team", value=team)
     cols[idx].metric(label="Race Win Rate", value="{:.2f} %".format(win_rate))
     cols[idx].metric(label="Podium Finish Rate", value="{:.2f} %".format(podium_rate))
     cols[idx].metric(label="Qualifying Pole Rate", value="{:.2f} %".format(pole_rate))
@@ -142,6 +140,32 @@ for idx, name in enumerate(selected_drivers):
 # calculate_scores(win_rates)
 calculate_scores(podium_rates)
 calculate_scores(pole_rates)
+
+# Query Date Range
+subheading = st.subheader('Race data from {}-{}'.format(1950, 2021))
+year_values = st.slider('Select data range', 1950, 2021, (2004, 2019))
+subheading.subheader('Race data from {}-{}'.format(year_values[0], year_values[1]))
+data = data[data.race_year.between(year_values[0], year_values[1], inclusive="both")]
+
+point_summary = data.groupby(['race_year','driver_name']).agg({'points':"sum"})
+point_summary = point_summary.reset_index()
+# x = pd.DataFrame(pd.pivot_table(point_summary, index = 'race_year', columns = 'driver_name', values = 'points').to_records()).set_index('race_year')
+
+st.subheader("Total points over the years")
+gp_chart = alt.Chart(point_summary).mark_bar().encode(
+  alt.Column('race_year'), alt.X('driver_name'),
+  alt.Y('points', axis=alt.Axis(grid=False)),
+  alt.Color('driver_name')).configure_view(
+    strokeWidth=0.0,
+)
+st.altair_chart(gp_chart)
+
+# cols = st.columns(len(selected_drivers))
+# for idx, name in enumerate(selected_drivers):
+#     cols[idx].bar_chart(x[name], )
+# fig, ax = plt.subplots(1)
+# sns.barplot(data=x, ax =ax)
+# st.pyplot(fig)
 
 # Select circuits
 st.subheader("Select your favourite circuit")
