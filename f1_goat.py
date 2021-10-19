@@ -182,13 +182,13 @@ cols = st.columns(len(selected_drivers))
 win_rates = []
 points = []
 avg_points = []
-
+st.subheader("Number of races at {} by each racer".format(selected_circuit))
 cols = st.columns(len(selected_drivers))
 for idx, name in enumerate(selected_drivers):
     driver_data = data[(data.driver_name == name)]
     lat = data[data.circuit_name == selected_circuit].lat.iloc[0]
     lon = data[data.circuit_name == selected_circuit].lon.iloc[0]
-    cols[idx].header(selected_circuit)
+    # cols[idx].header(selected_circuit)
     map(driver_data,lat, lon, 15    , cols[idx])
     race_data = driver_data[driver_data.circuit_name == selected_circuit].set_index('race_year')
     race_data.index = race_data.index.map(str)
@@ -245,7 +245,7 @@ st.altair_chart(gp_chart)
 # Bug in above code : https://github.com/streamlit/streamlit/issues/2023 to fix size
 
 hm_data = driver
-st.subheader("{}'s points over the years".format(selected_drivers[idx]))
+st.subheader("{}'s points over the years at {}".format(selected_drivers[idx], team_name))
 
 base = alt.Chart(hm_data).encode(
     x='circuit_name:O',
