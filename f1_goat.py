@@ -29,7 +29,7 @@ def get_driver_image(driver_name):
 
     headers = {
         'x-rapidapi-host': "api-formula-1.p.rapidapi.com",
-        'x-rapidapi-key': st.secrets.rapidapi_key
+        'x-rapidapi-key': st.secrets["rapidapi_key"]
         # 'x-rapidapi-key': "7e627ff4bemsh076cf2f715b08f9p1ede64jsnb7e5375d9a8f"
         }
 
