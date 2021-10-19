@@ -10,6 +10,8 @@ from io import BytesIO
 import seaborn as sns
 import altair as alt
 import matplotlib.pyplot as plt
+
+disable_api = True
 st.set_page_config(layout="wide")
 
 st.text('No way to settle an argument...')
@@ -26,28 +28,31 @@ def load_data():
 
 @st.cache
 def get_driver_image(driver_name):
-    driver_name = driver_name.replace(' ', '%20')
-    conn = http.client.HTTPSConnection("api-formula-1.p.rapidapi.com")
+    if not disable_api:
+        driver_name = driver_name.replace(' ', '%20')
+        conn = http.client.HTTPSConnection("api-formula-1.p.rapidapi.com")
 
-    headers = {
-        'x-rapidapi-host': "api-formula-1.p.rapidapi.com",
-        # 'x-rapidapi-key': st.secrets["rapidapi_key"]
-        'x-rapidapi-key': "7e627ff4bemsh076cf2f715b08f9p1ede64jsnb7e5375d9a8f"
-        }
+        headers = {
+            'x-rapidapi-host': "api-formula-1.p.rapidapi.com",
+            # 'x-rapidapi-key': st.secrets["rapidapi_key"]
+            'x-rapidapi-key': "7e627ff4bemsh076cf2f715b08f9p1ede64jsnb7e5375d9a8f"
+            }
 
-    conn.request("GET", "/drivers?search={}".format(driver_name), headers=headers)
+        conn.request("GET", "/drivers?search={}".format(driver_name), headers=headers)
 
-    res = conn.getresponse()
-    data = res.read()
-    json_obj = json.loads(data.decode("utf-8"))
-    if len(json_obj['response']) > 0:
-        return json_obj['response'][0]['image']
+        res = conn.getresponse()
+        data = res.read()
+        json_obj = json.loads(data.decode("utf-8"))
+        if len(json_obj['response']) > 0:
+            return json_obj['response'][0]['image']
+        else:
+            return "https://media.gettyimages.com/photos/racing-driver-standing-proud-on-black-background-picture-id91030097?k=20&m=91030097&s=612x612&w=0&h=tQI8woI99U7eEVCSwkrqJUUbcHpUIM41pLvZ856uXiY="
     else:
         return "https://media.gettyimages.com/photos/racing-driver-standing-proud-on-black-background-picture-id91030097?k=20&m=91030097&s=612x612&w=0&h=tQI8woI99U7eEVCSwkrqJUUbcHpUIM41pLvZ856uXiY="
 
 def map(data, lat, lon, zoom, column):
     column.pydeck_chart(pdk.Deck(
-     map_style='mapbox://styles/mapbox/light-v9',
+     map_style='mapbox://styles/mapbox/dark-v9',
      initial_view_state=pdk.ViewState(
          latitude=lat,
          longitude=lon,
@@ -77,7 +82,8 @@ def winner():
 def calculate_scores(scores):
     max_val = max(scores)
     for idx, val in enumerate(scores):
-        total_scores[idx] += val/max_val*100
+        if max_val != 0:
+            total_scores[idx] += val/max_val*100
 
 # Load Data
 # data_load_state = st.subheader('Calling Hamilton, Schumacher and Alonso, asking for their stats...')
@@ -87,7 +93,8 @@ data = load_data()
 # Query Drivers
 st.subheader('Select drivers')
 # ['Lewis Hamilton', 'Michael Schumacher', 'Kimi Raikkonen', 'Fernando Alonso']
-selected_drivers = st.multiselect("Select the drivers for comparison:", data.driver_name.unique(), ['Nico Rosberg','Kimi Raikkonen', 'Fernando Alonso'])
+selected_drivers = st.multiselect("Select the drivers for comparison:", data.driver_name.unique(), ['Lewis Hamilton', 'Michael Schumacher', 'Kimi Raikkonen', 'Fernando Alonso']
+)
 data = data[data.driver_name.isin(selected_drivers)]
 
 # Display Dataset
@@ -153,12 +160,13 @@ point_summary = point_summary.reset_index()
 
 st.subheader("Total points over the years")
 gp_chart = alt.Chart(point_summary).mark_bar().encode(
-  alt.Column('race_year'), alt.X('driver_name'),
+  alt.Column('race_year', ), alt.X('driver_name'),
   alt.Y('points', axis=alt.Axis(grid=False)),
   alt.Color('driver_name')).configure_view(
     strokeWidth=0.0,
 )
 st.altair_chart(gp_chart)
+# Bug in above code : https://github.com/streamlit/streamlit/issues/2023 to fix size
 
 # cols = st.columns(len(selected_drivers))
 # for idx, name in enumerate(selected_drivers):
@@ -192,7 +200,7 @@ for idx, name in enumerate(selected_drivers):
     total_points = race_data['points'].sum()
     wins = len(race_data[race_data['finish_position']== 1])
     avg_point = race_data['points'].mean()
-    delta = race_data[race_data.index == race_data.index[-1]]['points'].mean()
+    delta = race_data[race_data.index == race_data.index.max()]['points'].mean()
     cols[idx].metric(label="Wins on this circuit", value="{}".format(wins))
     cols[idx].metric(label="Total Points earned on this circuit", value="{}".format(total_points), delta=delta)
     cols[idx].metric(label="Average points earned per race", value="{:.1f}".format(avg_point))
@@ -205,8 +213,49 @@ calculate_scores(points)
 calculate_scores(avg_points)
 
 idx = total_scores.index(max(total_scores))
-_, col3, _ = st.columns([1,1,1])
-col3.subheader("And the GOAT (Based on the arbitrary scoring) is...")
-col3.title(selected_drivers[idx])
+st.markdown("<h1 style='text-align: center;'>And the GOAT (based on the arbitrary scoring) is...</h1>", unsafe_allow_html=True)
+
+col1, col3, col2 = st.columns([1,1,1])
+col1.image("trophy.png")
+col2.image("trophy.png")
 col3.image(resizedImgs[idx])
+col3.title(selected_drivers[idx])
 col3.button("Celebrate!", on_click=st.balloons)
+
+
+
+st.markdown("<h2 style='text-align: center;'>Contribution to Constructors' team.</h2>", unsafe_allow_html=True)
+
+
+data = load_data()
+driver = data[data.driver_name == selected_drivers[idx]]
+team_name = driver[driver.index == driver.index.max()]["team_name"].iloc[0]
+driver = data[(data.driver_name == selected_drivers[idx]) & (data.team_name == team_name)]
+activ_years = driver["race_year"].unique()
+data = data[(data.team_name == team_name) & data.race_year.isin(activ_years)]
+team_drivers = data.groupby(['race_year', "driver_name"]).agg({"points":"sum"}).reset_index()
+
+st.subheader("Different driver's at {} and their championship points".format(team_name))
+
+gp_chart = alt.Chart(team_drivers).mark_bar().encode(
+  alt.Column('race_year'), alt.X('driver_name'),
+  alt.Y('points', axis=alt.Axis(grid=False)),
+  alt.Color('driver_name')).configure_view(
+    strokeWidth=0.0,
+)
+st.altair_chart(gp_chart)
+# Bug in above code : https://github.com/streamlit/streamlit/issues/2023 to fix size
+
+hm_data = driver
+st.subheader("{}'s points over the years".format(selected_drivers[idx]))
+
+base = alt.Chart(hm_data).encode(
+    x='circuit_name:O',
+    y='race_year:O'
+)
+
+cor_plot = base.mark_rect().encode(
+    color='points:Q'
+)
+
+st.altair_chart(cor_plot, use_container_width=True)
